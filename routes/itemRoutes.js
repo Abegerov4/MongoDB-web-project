@@ -1,5 +1,6 @@
 import express from "express";
 import Item from "../models/Item.js";
+import apiKeyAuth from "../middleware/apiKeyAuth.js";
 
 const router = express.Router();
 
