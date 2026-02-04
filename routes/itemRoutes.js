@@ -4,112 +4,76 @@ import apiKeyAuth from "../middleware/apiKeyAuth.js";
 
 const router = express.Router();
 
-//GET /api/items
- 
+// GET — OPEN
 router.get("/", async (req, res) => {
-  try {
-    const items = await Item.find();
-    res.status(200).json(items);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  const items = await Item.find();
+  res.json(items);
 });
 
-//GET /api/items/:id
-
+// GET by ID — OPEN
 router.get("/:id", async (req, res) => {
   try {
     const item = await Item.findById(req.params.id);
-
-    if (!item) {
-      return res.status(404).json({ message: "Item not found" });
-    }
-
-    res.status(200).json(item);
+    if (!item) return res.status(404).json({ message: "Item not found" });
+    res.json(item);
   } catch {
     res.status(400).json({ message: "Invalid ID" });
   }
 });
 
-//POST /api/items
- 
-router.post("/", async (req, res) => {
-  try {
-    if (!req.body.name) {
-      return res.status(400).json({ message: "Name is required" });
-    }
-
-    const newItem = new Item(req.body);
-    const savedItem = await newItem.save();
-
-    res.status(201).json(savedItem);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+// POST — PROTECTED
+router.post("/", apiKeyAuth, async (req, res) => {
+  if (!req.body.name) {
+    return res.status(400).json({ message: "Name is required" });
   }
+  const item = new Item(req.body);
+  const saved = await item.save();
+  res.status(201).json(saved);
 });
 
-  //PUT /api/items/:id  (FULL update)
- 
-router.put("/:id", async (req, res) => {
-  try {
-    if (!req.body.name) {
-      return res.status(400).json({ message: "Name is required" });
-    }
-
-    const updatedItem = await Item.findByIdAndUpdate(
-      req.params.id,
-      {
-        name: req.body.name,
-        description: req.body.description,
-      },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedItem) {
-      return res.status(404).json({ message: "Item not found" });
-    }
-
-    res.status(200).json(updatedItem);
-  } catch {
-    res.status(400).json({ message: "Invalid ID" });
+// PUT — PROTECTED
+router.put("/:id", apiKeyAuth, async (req, res) => {
+  if (!req.body.name) {
+    return res.status(400).json({ message: "Name is required" });
   }
+
+  const updated = await Item.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true, runValidators: true }
+  );
+
+  if (!updated) {
+    return res.status(404).json({ message: "Item not found" });
+  }
+
+  res.json(updated);
 });
 
-// PATCH /api/items/:id  (PARTIAL update)
- 
-router.patch("/:id", async (req, res) => {
-  try {
-    const updatedItem = await Item.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+// PATCH — PROTECTED
+router.patch("/:id", apiKeyAuth, async (req, res) => {
+  const updated = await Item.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  );
 
-    if (!updatedItem) {
-      return res.status(404).json({ message: "Item not found" });
-    }
-
-    res.status(200).json(updatedItem);
-  } catch {
-    res.status(400).json({ message: "Invalid ID" });
+  if (!updated) {
+    return res.status(404).json({ message: "Item not found" });
   }
+
+  res.json(updated);
 });
 
+// DELETE — PROTECTED
+router.delete("/:id", apiKeyAuth, async (req, res) => {
+  const deleted = await Item.findByIdAndDelete(req.params.id);
 
- // DELETE /api/items/:id
- 
-router.delete("/:id", async (req, res) => {
-  try {
-    const deletedItem = await Item.findByIdAndDelete(req.params.id);
-
-    if (!deletedItem) {
-      return res.status(404).json({ message: "Item not found" });
-    }
-
-    res.status(204).send();
-  } catch {
-    res.status(400).json({ message: "Invalid ID" });
+  if (!deleted) {
+    return res.status(404).json({ message: "Item not found" });
   }
+
+  res.status(204).send();
 });
 
 export default router;
