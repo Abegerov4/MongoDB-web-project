@@ -3,20 +3,20 @@ import Item from "../models/Item.js";
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  res.json({ message: "API is running" });
-});
-
-router.get("/api/items", async (req, res) => {
+//GET /api/items
+ 
+router.get("/", async (req, res) => {
   try {
     const items = await Item.find();
-    res.json(items);
+    res.status(200).json(items);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-router.get("/api/items/:id", async (req, res) => {
+//GET /api/items/:id
+
+router.get("/:id", async (req, res) => {
   try {
     const item = await Item.findById(req.params.id);
 
@@ -24,23 +24,59 @@ router.get("/api/items/:id", async (req, res) => {
       return res.status(404).json({ message: "Item not found" });
     }
 
-    res.json(item);
-  } catch (error) {
+    res.status(200).json(item);
+  } catch {
     res.status(400).json({ message: "Invalid ID" });
   }
 });
 
-router.post("/api/items", async (req, res) => {
+//POST /api/items
+ 
+router.post("/", async (req, res) => {
   try {
+    if (!req.body.name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
     const newItem = new Item(req.body);
     const savedItem = await newItem.save();
+
     res.status(201).json(savedItem);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 });
 
-router.put("/api/items/:id", async (req, res) => {
+  //PUT /api/items/:id  (FULL update)
+ 
+router.put("/:id", async (req, res) => {
+  try {
+    if (!req.body.name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    const updatedItem = await Item.findByIdAndUpdate(
+      req.params.id,
+      {
+        name: req.body.name,
+        description: req.body.description,
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedItem) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    res.status(200).json(updatedItem);
+  } catch {
+    res.status(400).json({ message: "Invalid ID" });
+  }
+});
+
+// PATCH /api/items/:id  (PARTIAL update)
+ 
+router.patch("/:id", async (req, res) => {
   try {
     const updatedItem = await Item.findByIdAndUpdate(
       req.params.id,
@@ -52,13 +88,16 @@ router.put("/api/items/:id", async (req, res) => {
       return res.status(404).json({ message: "Item not found" });
     }
 
-    res.json(updatedItem);
-  } catch (error) {
+    res.status(200).json(updatedItem);
+  } catch {
     res.status(400).json({ message: "Invalid ID" });
   }
 });
 
-router.delete("/api/items/:id", async (req, res) => {
+
+ // DELETE /api/items/:id
+ 
+router.delete("/:id", async (req, res) => {
   try {
     const deletedItem = await Item.findByIdAndDelete(req.params.id);
 
@@ -66,8 +105,8 @@ router.delete("/api/items/:id", async (req, res) => {
       return res.status(404).json({ message: "Item not found" });
     }
 
-    res.json({ message: "Item deleted" });
-  } catch (error) {
+    res.status(204).send();
+  } catch {
     res.status(400).json({ message: "Invalid ID" });
   }
 });

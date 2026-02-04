@@ -5,13 +5,20 @@ import connectDB from "./config/db.js";
 import itemRoutes from "./routes/itemRoutes.js";
 
 dotenv.config();
+
 connectDB();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(itemRoutes);
+
+app.get("/", (req, res) => {
+  res.json({ message: "API is running" });
+});
+
+app.use("/api/items", itemRoutes);
 
 app.get("/version", (req, res) => {
   res.json({
@@ -19,8 +26,6 @@ app.get("/version", (req, res) => {
     updatedAt: "2026-01-18",
   });
 });
-
-const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
